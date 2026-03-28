@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SISTEMA IA - LOGIN</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { border: 2px solid #0f0; padding: 30px; border-radius: 10px; background: #050505; text-align: center; box-shadow: 0 0 15px #0f0; }
+        input { display: block; width: 200px; margin: 10px auto; padding: 10px; background: #111; border: 1px solid #0f0; color: #0f0; outline: none; }
+        button { padding: 10px 20px; background: #0f0; color: #000; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #008000; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>IDENTIFICACIÓN IA</h2>
+        <input type="text" id="user" placeholder="USUARIO">
+        <input type="password" id="pass" placeholder="PASSWORD">
+        <button onclick="entrar()">ACCEDER AL NÚCLEO</button>
+    </div>
+    <script>
+        function entrar() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            if(u === "admin" && p === "1234") {
+                window.location.href = "ia.html";
+            } else { alert("ACCESO DENEGADO"); }
+        }
+    </script>
+</body>
+</html>
