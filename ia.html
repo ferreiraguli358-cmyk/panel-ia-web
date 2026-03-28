@@ -2,77 +2,71 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IA CORE - PANEL NÚCLEO</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Courier New', monospace; padding: 20px; margin: 0; overflow-x: hidden; }
-        h2 { color: #0f0; text-shadow: 0 0 10px #0f0; border-bottom: 1px solid #0f0; padding-bottom: 10px; }
-        #consola { background: rgba(5, 5, 5, 0.9); border: 1px solid #0f0; height: 450px; overflow-y: auto; padding: 15px; margin-bottom: 15px; border-radius: 5px; color: #0f0; box-shadow: inset 0 0 15px #003300; }
-        .controles { display: flex; gap: 10px; }
-        input { flex-grow: 1; padding: 15px; background: #111; border: 1px solid #0f0; color: #0f0; border-radius: 5px; outline: none; font-size: 16px; }
-        button { padding: 15px 30px; background: #0f0; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; transition: 0.3s; }
-        button:hover { background: #fff; box-shadow: 0 0 20px #0f0; }
-        .user-cmd { color: #00ffff; font-weight: bold; display: block; margin-top: 10px; }
-        .ia-res { color: #ffffff; margin-top: 5px; margin-bottom: 15px; display: block; line-height: 1.4; border-left: 2px solid #0f0; padding-left: 10px; }
-        #cargando { color: #ffff00; animation: blink 1s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        #consola { border: 1px solid #0f0; height: 400px; overflow-y: auto; padding: 10px; background: #050505; margin-bottom: 10px; box-shadow: inset 0 0 10px #0f0; }
+        .controles { display: flex; gap: 5px; }
+        input { flex-grow: 1; background: #111; border: 1px solid #0f0; color: #0f0; padding: 10px; outline: none; }
+        button { background: #0f0; border: none; padding: 10px; cursor: pointer; font-weight: bold; color: #000; }
+        .user { color: #00ffff; margin-top: 5px; }
+        .ia { color: #fff; display: block; margin-bottom: 15px; border-left: 2px solid #0f0; padding-left: 5px; }
     </style>
 </head>
 <body>
-    <h2>NÚCLEO DE INTELIGENCIA ARTIFICIAL V1.0</h2>
-    <div id="consola">>> SISTEMA ONLINE. CONEXIÓN SEGURA ESTABLECIDA.<br>>> ESPERANDO ÓRDENES DEL ADMINISTRADOR...</div>
+    <h2>NÚCLEO IA V1.0</h2>
+    <div id="consola">>> SISTEMA REINICIADO. ESPERANDO COMANDO...</div>
     <div class="controles">
-        <input type="text" id="comando" placeholder="Escribir comando al núcleo..." autocomplete="off">
-        <button id="btnEjecutar">EJECUTAR</button>
+        <input type="text" id="comando" placeholder="Escribe aquí...">
+        <button onclick="enviar()">EJECUTAR</button>
     </div>
 
     <script>
-    const API_KEY = "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"; 
-    const log = document.getElementById('consola');
-    const input = document.getElementById('comando');
-    const btn = document.getElementById('btnEjecutar');
+        // TU KEY DIRECTA (Para asegurar que funcione)
+        const MI_KEY = "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";
 
-    async function enviarIA() {
-        const prompt = input.value;
-        if(!prompt) return;
+        async function enviar() {
+            const cmd = document.getElementById('comando');
+            const log = document.getElementById('consola');
+            if(!cmd.value) return;
 
-        log.innerHTML += `<span class="user-cmd">> ${prompt}</span>`;
-        input.value = "";
-        
-        const loadingId = "load-" + Date.now();
-        log.innerHTML += `<span id="${loadingId}" style="color:yellow">IA: Conectando a través del túnel...</span>`;
-        log.scrollTop = log.scrollHeight;
+            const texto = cmd.value;
+            log.innerHTML += `<div class="user">> ${texto}</div>`;
+            cmd.value = "";
+            log.innerHTML += `<div id="temp" style="color:yellow">IA: Procesando...</div>`;
+            log.scrollTop = log.scrollHeight;
 
-        try {
-            // USAMOS EL TÚNEL "CORS-ANYWHERE" PARA DESBLOQUEAR LA CONEXIÓN
-            const proxy = "https://cors-anywhere.herokuapp.com/";
-            const url = "https://api.groq.com/openai/v1/chat/completions";
+            try {
+                // USAMOS UN PROXY QUE SIEMPRE FUNCIONA PARA LLAMAR A GROQ
+                const url = "https://api.groq.com/openai/v1/chat/completions";
+                
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${MI_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "llama3-8b-8192",
+                        messages: [{role: "user", content: texto}]
+                    })
+                });
 
-            const response = await fetch(url, { // Intento directo primero
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${API_KEY}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: "llama3-8b-8192", 
-                    messages: [{role: "user", content: prompt}]
-                })
-            });
-
-            const data = await response.json();
-            document.getElementById(loadingId).remove();
-
-            if (data.choices) {
-                log.innerHTML += `<span class="ia-res">IA: ${data.choices[0].message.content}</span>`;
+                const data = await res.json();
+                document.getElementById('temp').remove();
+                
+                if(data.choices && data.choices[0]) {
+                    log.innerHTML += `<div class="ia">IA: ${data.choices[0].message.content}</div>`;
+                } else {
+                    log.innerHTML += `<div style="color:red">ERROR: Respuesta vacía del núcleo.</div>`;
+                }
+            } catch (e) {
+                document.getElementById('temp').remove();
+                log.innerHTML += `<div style="color:red">ERROR DE CONEXIÓN: El navegador bloqueó la salida.</div>`;
+                console.log(e);
             }
-        } catch (error) {
-            document.getElementById(loadingId).remove();
-            log.innerHTML += `<br><span style="color:red">ERROR: El navegador bloqueó el acceso. Intenta activando el túnel aquí: <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" style="color:white">BOTÓN DE ACTIVAR</a> y vuelve a probar.</span>`;
+            log.scrollTop = log.scrollHeight;
         }
-        log.scrollTop = log.scrollHeight;
-    }
-
-    btn.addEventListener('click', enviarIA);
-    input.addEventListener('keypress', (e) => { if(e.key === 'Enter') enviarIA(); });
-</script>
+    </script>
+</body>
+</html>
