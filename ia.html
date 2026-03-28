@@ -27,62 +27,52 @@
     </div>
 
     <script>
-        const API_KEY = "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"; 
-        const log = document.getElementById('consola');
-        const input = document.getElementById('comando');
-        const btn = document.getElementById('btnEjecutar');
+    const API_KEY = "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"; 
+    const log = document.getElementById('consola');
+    const input = document.getElementById('comando');
+    const btn = document.getElementById('btnEjecutar');
 
-        async function enviarIA() {
-            const prompt = input.value;
-            if(!prompt) return;
+    async function enviarIA() {
+        const prompt = input.value;
+        if(!prompt) return;
 
-            // Mostrar mensaje del usuario
-            log.innerHTML += `<span class="user-cmd">> ${prompt}</span>`;
-            input.value = "";
-            
-            // Crear indicador de carga
-            const loadingId = "load-" + Date.now();
-            log.innerHTML += `<span id="${loadingId}" id="cargando">IA: Procesando datos en el núcleo...</span>`;
-            log.scrollTop = log.scrollHeight;
+        log.innerHTML += `<span class="user-cmd">> ${prompt}</span>`;
+        input.value = "";
+        
+        const loadingId = "load-" + Date.now();
+        log.innerHTML += `<span id="${loadingId}" style="color:yellow">IA: Conectando a través del túnel...</span>`;
+        log.scrollTop = log.scrollHeight;
 
-            try {
-                // LLAMADA DIRECTA A GROQ
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${API_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: "llama3-8b-8192", 
-                        messages: [
-                            {role: "system", content: "Eres una IA avanzada de control de sistemas. Responde de forma técnica y profesional."},
-                            {role: "user", content: prompt}
-                        ],
-                        temperature: 0.7
-                    })
-                });
+        try {
+            // USAMOS EL TÚNEL "CORS-ANYWHERE" PARA DESBLOQUEAR LA CONEXIÓN
+            const proxy = "https://cors-anywhere.herokuapp.com/";
+            const url = "https://api.groq.com/openai/v1/chat/completions";
 
-                const data = await response.json();
-                document.getElementById(loadingId).remove();
+            const response = await fetch(url, { // Intento directo primero
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "llama3-8b-8192", 
+                    messages: [{role: "user", content: prompt}]
+                })
+            });
 
-                if (data.choices && data.choices[0]) {
-                    const respuestaIA = data.choices[0].message.content;
-                    log.innerHTML += `<span class="ia-res">IA: ${respuestaIA}</span>`;
-                } else {
-                    throw new Error("Respuesta inválida");
-                }
-            } catch (error) {
-                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                log.innerHTML += `<br><span style="color:red">ERROR DE NÚCLEO: La conexión fue rechazada por el servidor.</span>`;
-                console.error(error);
+            const data = await response.json();
+            document.getElementById(loadingId).remove();
+
+            if (data.choices) {
+                log.innerHTML += `<span class="ia-res">IA: ${data.choices[0].message.content}</span>`;
             }
-            log.scrollTop = log.scrollHeight;
+        } catch (error) {
+            document.getElementById(loadingId).remove();
+            log.innerHTML += `<br><span style="color:red">ERROR: El navegador bloqueó el acceso. Intenta activando el túnel aquí: <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" style="color:white">BOTÓN DE ACTIVAR</a> y vuelve a probar.</span>`;
         }
+        log.scrollTop = log.scrollHeight;
+    }
 
-        // Eventos
-        btn.addEventListener('click', enviarIA);
-        input.addEventListener('keypress', (e) => { if(e.key === 'Enter') enviarIA(); });
-    </script>
-</body>
-</html>
+    btn.addEventListener('click', enviarIA);
+    input.addEventListener('keypress', (e) => { if(e.key === 'Enter') enviarIA(); });
+</script>
