@@ -10,21 +10,23 @@
         .controles { display: flex; gap: 10px; }
         input { flex-grow: 1; padding: 12px; background: #111; border: 1px solid #0f0; color: #0f0; border-radius: 5px; outline: none; }
         button { padding: 12px 25px; background: #0f0; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
-        button:hover { background: #fff; }
+        button:hover { background: #fff; box-shadow: 0 0 10px #0f0; }
         .user-cmd { color: #00ffff; font-weight: bold; margin-top: 10px; display: block; }
         .ia-res { color: #ffffff; margin-bottom: 15px; display: block; border-left: 2px solid #0f0; padding-left: 10px; }
+        .error { color: #ff0000; font-weight: bold; }
     </style>
 </head>
 <body>
     <h2>NÚCLEO DE INTELIGENCIA ARTIFICIAL V1.0</h2>
-    <div id="consola">>> SISTEMA ONLINE. ESPERANDO ÓRDENES...</div>
+    <div id="consola">>> SISTEMA ONLINE. CONEXIÓN CIFRADA ESTABLECIDA.<br>>> ESPERANDO ÓRDENES...</div>
     <div class="controles">
         <input type="text" id="comando" placeholder="Escribir comando..." autocomplete="off">
         <button onclick="enviarIA()">EJECUTAR</button>
     </div>
 
     <script>
-        const API_KEY = "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"; 
+        // NUEVA API KEY CARGADA
+        const API_KEY = "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"; 
 
         async function enviarIA() {
             const prompt = document.getElementById('comando').value;
@@ -34,14 +36,15 @@
             log.innerHTML += `<span class="user-cmd">> ${prompt}</span>`;
             document.getElementById('comando').value = "";
             const loadingId = "L-" + Date.now();
-            log.innerHTML += `<span id="${loadingId}" style="color:yellow">IA: Procesando...</span>`;
+            log.innerHTML += `<span id="${loadingId}" style="color:yellow">IA: Accediendo al núcleo mediante túnel seguro...</span>`;
             log.scrollTop = log.scrollHeight;
 
             try {
-                // Usamos un Proxy que no requiere activación manual
-                const url = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://api.groq.com/openai/v1/chat/completions");
+                // USAMOS UN PROXY PARA SALTAR EL BLOQUEO DE NAVEGADOR (CORS)
+                const proxyUrl = "https://corsproxy.io/?";
+                const targetUrl = "https://api.groq.com/openai/v1/chat/completions";
 
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${API_KEY}`,
@@ -49,11 +52,17 @@
                     },
                     body: JSON.stringify({
                         model: "llama3-8b-8192",
-                        messages: [{role: "user", content: prompt}]
+                        messages: [
+                            {role: "system", content: "Eres un núcleo de IA avanzado. Responde de forma técnica y breve."},
+                            {role: "user", content: prompt}
+                        ]
                     })
                 });
 
-                if (!response.ok) throw new Error("Error en red");
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(errorData);
+                }
 
                 const data = await response.json();
                 document.getElementById(loadingId).remove();
@@ -62,8 +71,8 @@
                 log.innerHTML += `<span class="ia-res">IA: ${respuestaIA}</span>`;
             } catch (error) {
                 if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
-                log.innerHTML += `<br><span style="color:red">ERROR: El navegador bloqueó la respuesta. Saltando al Plan APK...</span>`;
-                console.error(error);
+                log.innerHTML += `<br><span class="error">ERROR CRÍTICO: El núcleo rechazó la petición. Reintentando...</span>`;
+                console.error("Detalle del error:", error);
             }
             log.scrollTop = log.scrollHeight;
         }
