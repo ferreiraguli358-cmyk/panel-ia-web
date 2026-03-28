@@ -2,68 +2,68 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IA CORE - PANEL NÚCLEO</title>
     <style>
-        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
-        #consola { border: 1px solid #0f0; height: 400px; overflow-y: auto; padding: 10px; background: #050505; margin-bottom: 10px; box-shadow: inset 0 0 10px #0f0; }
-        .controles { display: flex; gap: 5px; }
-        input { flex-grow: 1; background: #111; border: 1px solid #0f0; color: #0f0; padding: 10px; outline: none; }
-        button { background: #0f0; border: none; padding: 10px; cursor: pointer; font-weight: bold; color: #000; }
-        .user { color: #00ffff; margin-top: 5px; }
-        .ia { color: #fff; display: block; margin-bottom: 15px; border-left: 2px solid #0f0; padding-left: 5px; }
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 20px; margin: 0; }
+        #consola { background: #050505; border: 1px solid #0f0; height: 450px; overflow-y: auto; padding: 15px; margin-bottom: 15px; border-radius: 5px; color: #0f0; box-shadow: inset 0 0 15px #003300; }
+        .controles { display: flex; gap: 10px; }
+        input { flex-grow: 1; padding: 12px; background: #111; border: 1px solid #0f0; color: #0f0; border-radius: 5px; outline: none; }
+        button { padding: 12px 25px; background: #0f0; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        button:hover { background: #fff; }
+        .user-cmd { color: #00ffff; font-weight: bold; margin-top: 10px; display: block; }
+        .ia-res { color: #ffffff; margin-bottom: 15px; display: block; border-left: 2px solid #0f0; padding-left: 10px; }
     </style>
 </head>
 <body>
-    <h2>NÚCLEO IA V1.0</h2>
-    <div id="consola">>> SISTEMA REINICIADO. ESPERANDO COMANDO...</div>
+    <h2>NÚCLEO DE INTELIGENCIA ARTIFICIAL V1.0</h2>
+    <div id="consola">>> SISTEMA ONLINE. ESPERANDO ÓRDENES...</div>
     <div class="controles">
-        <input type="text" id="comando" placeholder="Escribe aquí...">
-        <button onclick="enviar()">EJECUTAR</button>
+        <input type="text" id="comando" placeholder="Escribir comando..." autocomplete="off">
+        <button onclick="enviarIA()">EJECUTAR</button>
     </div>
 
     <script>
-        // TU KEY DIRECTA (Para asegurar que funcione)
-        const MI_KEY = "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";
+        const API_KEY = "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"; 
 
-        async function enviar() {
-            const cmd = document.getElementById('comando');
+        async function enviarIA() {
+            const prompt = document.getElementById('comando').value;
             const log = document.getElementById('consola');
-            if(!cmd.value) return;
+            if(!prompt) return;
 
-            const texto = cmd.value;
-            log.innerHTML += `<div class="user">> ${texto}</div>`;
-            cmd.value = "";
-            log.innerHTML += `<div id="temp" style="color:yellow">IA: Procesando...</div>`;
+            log.innerHTML += `<span class="user-cmd">> ${prompt}</span>`;
+            document.getElementById('comando').value = "";
+            const loadingId = "L-" + Date.now();
+            log.innerHTML += `<span id="${loadingId}" style="color:yellow">IA: Procesando...</span>`;
             log.scrollTop = log.scrollHeight;
 
             try {
-                // USAMOS UN PROXY QUE SIEMPRE FUNCIONA PARA LLAMAR A GROQ
-                const url = "https://api.groq.com/openai/v1/chat/completions";
-                
-                const res = await fetch(url, {
+                // Usamos un Proxy que no requiere activación manual
+                const url = "https://api.allorigins.win/get?url=" + encodeURIComponent("https://api.groq.com/openai/v1/chat/completions");
+
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${MI_KEY}`,
+                        "Authorization": `Bearer ${API_KEY}`,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
                         model: "llama3-8b-8192",
-                        messages: [{role: "user", content: texto}]
+                        messages: [{role: "user", content: prompt}]
                     })
                 });
 
-                const data = await res.json();
-                document.getElementById('temp').remove();
+                if (!response.ok) throw new Error("Error en red");
+
+                const data = await response.json();
+                document.getElementById(loadingId).remove();
                 
-                if(data.choices && data.choices[0]) {
-                    log.innerHTML += `<div class="ia">IA: ${data.choices[0].message.content}</div>`;
-                } else {
-                    log.innerHTML += `<div style="color:red">ERROR: Respuesta vacía del núcleo.</div>`;
-                }
-            } catch (e) {
-                document.getElementById('temp').remove();
-                log.innerHTML += `<div style="color:red">ERROR DE CONEXIÓN: El navegador bloqueó la salida.</div>`;
-                console.log(e);
+                const respuestaIA = data.choices[0].message.content;
+                log.innerHTML += `<span class="ia-res">IA: ${respuestaIA}</span>`;
+            } catch (error) {
+                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                log.innerHTML += `<br><span style="color:red">ERROR: El navegador bloqueó la respuesta. Saltando al Plan APK...</span>`;
+                console.error(error);
             }
             log.scrollTop = log.scrollHeight;
         }
